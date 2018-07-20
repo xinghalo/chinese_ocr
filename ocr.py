@@ -8,7 +8,7 @@ from PIL import Image
 
 sys.path.append(os.getcwd() + '/ctpn')
 from ctpn.text_detect import text_detect
-from lib.fast_rcnn.config import cfg_from_file
+from ctpn.lib.fast_rcnn.config import cfg_from_file
 from densenet.model import predict as keras_densenet
 
 
