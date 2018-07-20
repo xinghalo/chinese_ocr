@@ -79,9 +79,12 @@ def model(img, adjust=False):
     @img: 图片
     @adjust: 是否调整文字识别结果
     """
+    # 加载配置文件
     cfg_from_file('./ctpn/ctpn/text.yml')
+    # 绘制图形Box信息
     text_recs, img_framed, img = text_detect(img)
     text_recs = sort_box(text_recs)
+    # 字符识别
     result = charRec(img, text_recs, adjust)
     return result, img_framed
 

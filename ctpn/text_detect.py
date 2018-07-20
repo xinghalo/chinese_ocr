@@ -3,25 +3,34 @@ import sys
 import cv2
 import numpy as np
 import tensorflow as tf
-from lib.utils.timer import Timer
-from lib.fast_rcnn.config import cfg
-from lib.fast_rcnn.test import  test_ctpn
-from lib.networks.factory import get_network
-from lib.text_connector.detectors import TextDetector
-from lib.text_connector.text_connect_cfg import Config as TextLineCfg
+from ctpn.lib.utils.timer import Timer
+from ctpn.lib.fast_rcnn.config import cfg
+from ctpn.lib.fast_rcnn.test import  test_ctpn
+from ctpn.lib.networks.factory import get_network
+from ctpn.lib.text_connector.detectors import TextDetector
+from ctpn.lib.text_connector.text_connect_cfg import Config as TextLineCfg
 
 
 def resize_im(im, scale, max_scale=None):
+    """
+    调整图片尺寸
+
+    :param im:
+    :param scale:
+    :param max_scale:
+    :return:
+    """
     f = float(scale) / min(im.shape[0], im.shape[1])
     if max_scale != None and f * max(im.shape[0], im.shape[1]) > max_scale:
         f = float(max_scale) / max(im.shape[0], im.shape[1])
+    # 基于opencv调整图片尺寸，使用的方法是inter_linear
     return cv2.resize(im, None, None, fx=f, fy=f, interpolation=cv2.INTER_LINEAR), f
 
 def load_tf_model():
     # load config file
     cfg.TEST.checkpoints_path = './ctpn/checkpoints'
 
-    # init session
+    # init session todo 不知道这些是什么意思
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
     config = tf.ConfigProto(allow_soft_placement=True, gpu_options=gpu_options)
     sess = tf.Session(config=config)
@@ -31,8 +40,10 @@ def load_tf_model():
 
     # load model
     print('Loading network {:s}... '.format("VGGnet_test"))
+    # todo 不懂这里是什么意思
     saver = tf.train.Saver()
     try:
+        # todo tf的检查点
         ckpt = tf.train.get_checkpoint_state(cfg.TEST.checkpoints_path)
         print('Restoring from {}...'.format(ckpt.model_checkpoint_path))
         saver.restore(sess, ckpt.model_checkpoint_path)
@@ -42,15 +53,19 @@ def load_tf_model():
 
     return sess, net
 
+# 加载模型
 sess, net = load_tf_model()
 
 def ctpn(img):
     timer = Timer()
     timer.tic()
 
+    # 调整图片尺寸
     img, scale = resize_im(img, scale=TextLineCfg.SCALE, max_scale=TextLineCfg.MAX_SCALE)
+    # todo 获得分数和boxes信息
     scores, boxes = test_ctpn(sess, net, img)
 
+    # 清理文本框
     textdetector = TextDetector()
     boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
     timer.toc()
@@ -93,7 +108,7 @@ def text_detect(img):
 
 if __name__ == '__main__':
     from PIL import Image
-    from lib.fast_rcnn.config import cfg_from_file
+    from ctpn.lib.fast_rcnn.config import cfg_from_file
     cfg_from_file('./ctpn/ctpn/text.yml')
     im = Image.open('./test_images/1.jpg')
     img = np.array(im.convert('RGB'))
