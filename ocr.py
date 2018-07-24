@@ -57,7 +57,7 @@ def charRec(img, text_recs, adjust=False):
            pt2 = (rec[2], rec[3])
            pt3 = (min(rec[6], xDim - 2), min(yDim - 2, rec[7]))
            pt4 = (rec[4], rec[5])
-        
+       # TODO 针对图像的预处理
        degree = degrees(atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]))  # 图像倾斜角度
 
        partImg = dumpRotateImage(img, degree, pt1, pt2, pt3, pt4)
@@ -65,7 +65,9 @@ def charRec(img, text_recs, adjust=False):
        if partImg.shape[0] < 1 or partImg.shape[1] < 1 or partImg.shape[0] > partImg.shape[1]:  # 过滤异常图片
            continue
 
+       # TODO convert L是啥意思
        image = Image.fromarray(partImg).convert('L')
+       # 通过densenet对图片进行预测以及解码
        text = keras_densenet(image)
        
        if len(text) > 0:
@@ -84,7 +86,8 @@ def model(img, adjust=False):
     # 绘制图形Box信息
     text_recs, img_framed, img = text_detect(img)
     text_recs = sort_box(text_recs)
-    # 字符识别
+    # 字符识别, 通过前面你的Box信息，对图像进行裁剪，基于denseNet+ctc预测输出序列
+    # 再通过对比词典进行转义
     result = charRec(img, text_recs, adjust)
     return result, img_framed
 

@@ -78,8 +78,19 @@ class random_uniform_num():
         return r_n
 
 def gen(data_file, image_path, batchsize=128, maxlabellength=10, imagesize=(32, 280)):
+    """
+    针对图片进行训练数据的转换
+
+    :param data_file:
+    :param image_path:
+    :param batchsize:
+    :param maxlabellength:
+    :param imagesize:
+    :return:
+    """
     image_label = readfile(data_file)
     _imagefile = [i for i, j in image_label.items()]
+    # 训练集每个都是(32,280,1)的矩阵
     x = np.zeros((batchsize, imagesize[0], imagesize[1], 1), dtype=np.float)
     labels = np.ones([batchsize, maxlabellength]) * 10000
     input_length = np.zeros([batchsize, 1])
@@ -87,7 +98,10 @@ def gen(data_file, image_path, batchsize=128, maxlabellength=10, imagesize=(32, 
 
     r_n = random_uniform_num(len(_imagefile))
     _imagefile = np.array(_imagefile)
+
+    # 这是python的高级用法——生成器
     while 1:
+        # TODO 这一块等有数据了在看吧
         shufimagefile = _imagefile[r_n.get(batchsize)]
         for i, j in enumerate(shufimagefile):
             img1 = Image.open(os.path.join(image_path, j)).convert('L')
@@ -119,6 +133,7 @@ def get_model(img_h, nclass):
     input = Input(shape=(img_h, None, 1), name='the_input')
     y_pred = densenet.dense_cnn(input, nclass)
 
+    # todo 这个basemodel是干嘛的？
     basemodel = Model(inputs=input, outputs=y_pred)
     basemodel.summary()
 
@@ -126,6 +141,7 @@ def get_model(img_h, nclass):
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     label_length = Input(name='label_length', shape=[1], dtype='int64')
 
+    # todo ctc loss 是什么？
     loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')([y_pred, labels, input_length, label_length])
 
     model = Model(inputs=[input, labels, input_length, label_length], outputs=loss_out)
@@ -140,6 +156,7 @@ if __name__ == '__main__':
     nclass = len(char_set)
 
     K.set_session(get_session())
+    # densenet是一种能解决梯度弥散问题的CNN
     reload(densenet)
     basemodel, model = get_model(img_h, nclass)
 
@@ -152,10 +169,14 @@ if __name__ == '__main__':
     train_loader = gen('data_train.txt', './images', batchsize=batch_size, maxlabellength=maxlabellength, imagesize=(img_h, img_w))
     test_loader = gen('data_test.txt', './images', batchsize=batch_size, maxlabellength=maxlabellength, imagesize=(img_h, img_w))
 
+    # 在每个epoch后保存模型到filepath
     checkpoint = ModelCheckpoint(filepath='./models/weights-densenet-{epoch:02d}-{val_loss:.2f}.h5', monitor='val_loss', save_best_only=False, save_weights_only=True)
+
     lr_schedule = lambda epoch: 0.0005 * 0.4**epoch
     learning_rate = np.array([lr_schedule(i) for i in range(10)])
+    # 学习率的调度器
     changelr = LearningRateScheduler(lambda epoch: float(learning_rate[epoch]))
+    # 当检测的值不在改善时，该回调方法终止训练
     earlystop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
     tensorboard = TensorBoard(log_dir='./models/logs', write_graph=True)
 

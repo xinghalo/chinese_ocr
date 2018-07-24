@@ -60,9 +60,9 @@ def ctpn(img):
     timer = Timer()
     timer.tic()
 
-    # 调整图片尺寸
+    # 调整图片尺寸，长和宽缩小到最小维度为900-1500
     img, scale = resize_im(img, scale=TextLineCfg.SCALE, max_scale=TextLineCfg.MAX_SCALE)
-    # todo 获得分数和boxes信息
+    # 获得分数和boxes信息
     scores, boxes = test_ctpn(sess, net, img)
 
     # 清理文本框
@@ -102,6 +102,7 @@ def draw_boxes(img, boxes, scale):
     return text_recs, img
 
 def text_detect(img):
+    # 基于CTPN生成检测信息
     scores, boxes, img, scale = ctpn(img)
     text_recs, img_drawed = draw_boxes(img, boxes, scale)
     return text_recs, img_drawed, img

@@ -6,11 +6,11 @@ from ..utils.blob import im_list_to_blob
 
 def _get_image_blob(im):
     im_orig = im.astype(np.float32, copy=True)
-    im_orig -= cfg.PIXEL_MEANS
+    im_orig -= cfg.PIXEL_MEANS # 这个PIXEL_MEANS是固定的
 
     im_shape = im_orig.shape
-    im_size_min = np.min(im_shape[0:2])
-    im_size_max = np.max(im_shape[0:2])
+    im_size_min = np.min(im_shape[0:2]) # 长宽里面最小的
+    im_size_max = np.max(im_shape[0:2]) # 长款里面最大的
 
     processed_ims = []
     im_scale_factors = []
@@ -26,6 +26,8 @@ def _get_image_blob(im):
         processed_ims.append(im)
 
     # Create a blob to hold the input images
+    # TODO 输入放到了一个数组里面，可是这里只有一个图片，纳闷为啥要放入数组
+    # 维度没有发生任何变化
     blob = im_list_to_blob(processed_ims)
 
     return blob, np.array(im_scale_factors)
@@ -38,13 +40,16 @@ def _get_blobs(im, rois):
 
 
 def test_ctpn(sess, net, im, boxes=None):
+    # 获得图像与其缩放因子之间的关系
     blobs, im_scales = _get_blobs(im, boxes)
+    # True
     if cfg.TEST.HAS_RPN:
         im_blob = blobs['data']
         blobs['im_info'] = np.array(
             [[im_blob.shape[1], im_blob.shape[2], im_scales[0]]],
             dtype=np.float32)
     # forward pass
+    # True
     if cfg.TEST.HAS_RPN:
         feed_dict = {net.data: blobs['data'], net.im_info: blobs['im_info'], net.keep_prob: 1.0}
 
