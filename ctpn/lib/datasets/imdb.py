@@ -4,7 +4,7 @@ import PIL
 import numpy as np
 import scipy.sparse
 
-from ..utils.bbox import bbox_overlaps
+from ctpn.lib.utils.bbox import bbox_overlaps
 from ..fast_rcnn.config import cfg
 
 

@@ -61,6 +61,7 @@ class TextProposalGraphBuilder:
 
         boxes_table=[[] for _ in range(self.im_size[1])]
         for index, box in enumerate(text_proposals):
+            # 给每个x1设置对应的框体index
             boxes_table[int(box[0])].append(index)
         self.boxes_table=boxes_table
 

@@ -2,6 +2,12 @@ import numpy as np
 
 
 def normalize(data):
+    """
+    数据最大最小值标准化
+
+    :param data:
+    :return:
+    """
     if data.shape[0] == 0:
         return data
     max_ = data.max()

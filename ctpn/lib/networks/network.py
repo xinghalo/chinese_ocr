@@ -99,6 +99,10 @@ class Network(object):
             lstm_fw_cell = tf.contrib.rnn.LSTMCell(d_h, state_is_tuple=True)
             lstm_bw_cell = tf.contrib.rnn.LSTMCell(d_h, state_is_tuple=True)
 
+            # 参数分别是：
+            # 前向的RNN
+            # 后向的RNN
+            # 输入
             lstm_out, last_state = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell, img, dtype=tf.float32)
             lstm_out = tf.concat(lstm_out, axis=-1)
 

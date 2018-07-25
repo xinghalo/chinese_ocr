@@ -44,6 +44,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
 
     """
     cfg_key=cfg_key.decode('ascii')
+    # 生成10个框体
     _anchors = generate_anchors(scales=np.array(anchor_scales))#生成基本的9个anchor
     _num_anchors = _anchors.shape[0]#9个anchor
 
@@ -52,10 +53,10 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     assert rpn_cls_prob_reshape.shape[0] == 1, \
         'Only single item batches are supported'
 
-    pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N#12000,在做nms之前，最多保留的候选box数目
-    post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N#2000，做完nms之后，最多保留的box的数目
-    nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH#nms用参数，阈值是0.7
-    min_size      = cfg[cfg_key].RPN_MIN_SIZE#候选box的最小尺寸，目前是16，高宽均要大于16
+    pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N  #12000,在做nms之前，最多保留的候选box数目
+    post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N #2000，做完nms之后，最多保留的box的数目
+    nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH     #nms用参数，阈值是0.7
+    min_size      = cfg[cfg_key].RPN_MIN_SIZE       #候选box的最小尺寸，目前是16，高宽均要大于16
     #TODO 后期需要修改这个最小尺寸，改为8？
 
     height, width = rpn_cls_prob_reshape.shape[1:3]#feature-map的高宽
@@ -63,6 +64,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     # the first set of _num_anchors channels are bg probs
     # the second set are the fg probs, which we want
     # (1, H, W, A)
+    # 这里本来是(1, h, w, a, 2)，在reshape之后，固定取了下标为1的列，就变成了(1, h, w, a)
     scores = np.reshape(np.reshape(rpn_cls_prob_reshape, [1, height, width, _num_anchors, 2])[:,:,:,:,1],
                         [1, height, width, _num_anchors])
     #提取到object的分数，non-object的我们不关心
@@ -81,6 +83,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
 
     # Enumerate all shifts
     # 同anchor-target-layer-tf这个文件一样，生成anchor的shift，进一步得到整张图像上的所有anchor
+    # todo 不知道这里的shift是什么作用啊！
     shift_x = np.arange(0, width) * _feat_stride
     shift_y = np.arange(0, height) * _feat_stride
     shift_x, shift_y = np.meshgrid(shift_x, shift_y)

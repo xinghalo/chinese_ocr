@@ -28,6 +28,7 @@ class TextProposalConnector:
         
         """
         # tp=text proposal
+        # TODO 结果是8个数字，不知道是干嘛的
         tp_groups=self.group_text_proposals(text_proposals, scores, im_size)#首先还是建图，获取到文本行由哪几个小框构成
         
         text_lines=np.zeros((len(tp_groups), 8), np.float32)
