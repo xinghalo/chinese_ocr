@@ -149,25 +149,51 @@ class Network(object):
 
     @layer
     def lstm_fc(self, input, d_i, d_o, name, trainable=True):
+        """
+        相当于不同维度的全连接层，使用的时候输出两个，一个是2k，一个是4k.
+        2k的是对应的分值，4k的是对应的边框点
+
+        :param input:
+        :param d_i:
+        :param d_o:
+        :param name:
+        :param trainable:
+        :return:
+        """
         with tf.variable_scope(name) as scope:
             shape = tf.shape(input)
+            # N 应该是1
+            # H 是高度，是图片高度的1/16
+            # W 是宽度，是图片宽度的1/16
+            # C 是通道数，256
             N, H, W, C = shape[0], shape[1], shape[2], shape[3]
+            # 转换成二维： (x, 256)
             input = tf.reshape(input, [N*H*W,C])
 
+            # 初始化 权值 和 偏置
             init_weights = tf.truncated_normal_initializer(0.0, stddev=0.01)
             init_biases = tf.constant_initializer(0.0)
+            # 创建 512*4k 的变量，其中k为anchors的数量
             kernel = self.make_var('weights', [d_i, d_o], init_weights, trainable,
                                    regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
             biases = self.make_var('biases', [d_o], init_biases, trainable)
 
+            # 矩阵相乘，变换。输出为 (x,4)
             _O = tf.matmul(input, kernel) + biases
+            # 即每个点的256向量变成4
             return tf.reshape(_O, [N, H, W, int(d_o)])
 
     @layer
     def conv(self, input, k_h, k_w, c_o, s_h, s_w, name, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
-        """ contribution by miraclebiu, and biased option"""
+        """
+        contribution by miraclebiu, and biased option
+        卷积层，内部使用relu作为激活层，并支持配置是否带偏置项
+        """
+        # 对矩阵进行填充，SAME表示填充1，VALID表示丢弃
         self.validate_padding(padding)
+        # todo ???
         c_i = input.get_shape()[-1]
+        # 卷积操作，i= input, k=kenerl, stride
         convolve = lambda i, k: tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
         with tf.variable_scope(name) as scope:
 
@@ -175,6 +201,7 @@ class Network(object):
             init_biases = tf.constant_initializer(0.0)
             kernel = self.make_var('weights', [k_h, k_w, c_i, c_o], init_weights, trainable, \
                                    regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            # 是否带偏置项
             if biased:
                 biases = self.make_var('biases', [c_o], init_biases, trainable)
                 conv = convolve(input, kernel)

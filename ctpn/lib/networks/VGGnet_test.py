@@ -36,10 +36,13 @@ class VGGnet_test(Network):
          .conv(3, 3, 512, 1, 1, name='conv5_2')
          .conv(3, 3, 512, 1, 1, name='conv5_3'))
 
+        # 卷积层，kernel的w，kernel的h，kernel的个数，步长w，步长h，名字（scpoe）
         (self.feed('conv5_3').conv(3, 3, 512, 1, 1, name='rpn_conv/3x3'))
-
+        # todo LSTM还得看看
         (self.feed('rpn_conv/3x3').Bilstm(512, 128, 512, name='lstm_o'))
+        # 边框点的预测，每个边框的高度点
         (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
+        # 边框评分，每个边框是否是背景
         (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
 
         #  shape is (1, H, W, Ax2) -> (1, H, WxA, 2)
